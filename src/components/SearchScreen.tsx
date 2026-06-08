@@ -64,7 +64,7 @@ export default function SearchScreen() {
 
       setError(errorMessage);
 
-      Alert.alert("Error", errorMessage);
+      // Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
