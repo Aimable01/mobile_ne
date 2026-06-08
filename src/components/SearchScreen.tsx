@@ -50,6 +50,8 @@ export default function SearchScreen() {
 
       await addToHistory(trimmedQuery);
 
+      setSearchQuery("");
+
       router.push({
         pathname: "/word-details",
         params: {
