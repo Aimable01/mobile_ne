@@ -1,3 +1,4 @@
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAudioPlayer } from "expo-audio";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -19,11 +20,12 @@ import {
   Shadows,
   Spacing,
 } from "../constants/theme";
+import { useSearchHistory } from "../contexts/SearchHistoryContext";
 import { Definition, Meaning, WordData } from "../services/dictionaryApi";
-import { searchHistory } from "../utils/searchHistory";
 
 export default function WordDetailsScreen() {
   const { wordData } = useLocalSearchParams<{ wordData: string }>();
+  const { addToHistory } = useSearchHistory();
 
   const [data, setData] = useState<WordData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,7 +103,7 @@ export default function WordDetailsScreen() {
 
       const result = await dictionaryApi.searchWord(word);
 
-      await searchHistory.addToHistory(word);
+      await addToHistory(word);
 
       router.push({
         pathname: "/word-details",
@@ -219,19 +221,45 @@ export default function WordDetailsScreen() {
                   ]}
                   onPress={() => handleAudioPress(phonetic.audio!)}
                 >
-                  <Text style={styles.audioButtonText}>
-                    {currentAudioUrl === phonetic.audio && player.playing
-                      ? "⏸️ Pause"
-                      : currentAudioUrl === phonetic.audio
-                        ? "▶️ Resume"
-                        : "🔊 Listen"}
-                  </Text>
+                  <View style={styles.audioButtonContent}>
+                    {currentAudioUrl === phonetic.audio && player.playing ? (
+                      <>
+                        <Ionicons
+                          name="pause"
+                          size={16}
+                          color={Colors.background}
+                        />
+                        <Text style={styles.audioButtonText}>Pause</Text>
+                      </>
+                    ) : currentAudioUrl === phonetic.audio ? (
+                      <>
+                        <Ionicons
+                          name="play"
+                          size={16}
+                          color={Colors.background}
+                        />
+                        <Text style={styles.audioButtonText}>Resume</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Ionicons
+                          name="volume-high"
+                          size={16}
+                          color={Colors.background}
+                        />
+                        <Text style={styles.audioButtonText}>Listen</Text>
+                      </>
+                    )}
+                  </View>
                 </TouchableOpacity>
               ))}
 
               {currentAudioUrl && (
                 <TouchableOpacity style={styles.stopButton} onPress={stopAudio}>
-                  <Text style={styles.stopButtonText}>⏹️ Stop</Text>
+                  <View style={styles.stopButtonContent}>
+                    <Ionicons name="stop" size={16} color={Colors.background} />
+                    <Text style={styles.stopButtonText}>Stop</Text>
+                  </View>
                 </TouchableOpacity>
               )}
             </View>
@@ -395,6 +423,11 @@ const styles = StyleSheet.create({
     fontWeight: FontWeights.semibold,
     fontFamily: "Inter",
   },
+  audioButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
   stopButton: {
     backgroundColor: Colors.error,
     paddingHorizontal: Spacing.lg,
@@ -408,6 +441,11 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     fontWeight: FontWeights.semibold,
     fontFamily: "Inter",
+  },
+  stopButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
   },
   meaningContainer: {
     marginBottom: Spacing.xl,

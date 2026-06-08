@@ -1,28 +1,27 @@
 import { router, useNavigation } from "expo-router";
-// import { DrawerActions } from "expo-router/react-navigation";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Keyboard,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Keyboard,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import {
-  BorderRadius,
-  Colors,
-  FontSizes,
-  FontWeights,
-  Shadows,
-  Spacing,
+    BorderRadius,
+    Colors,
+    FontSizes,
+    FontWeights,
+    Shadows,
+    Spacing,
 } from "../constants/theme";
 
+import { useSearchHistory } from "../contexts/SearchHistoryContext";
 import { dictionaryApi } from "../services/dictionaryApi";
-import { searchHistory } from "../utils/searchHistory";
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,6 +29,7 @@ export default function SearchScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const navigation = useNavigation<any>();
+  const { addToHistory } = useSearchHistory();
 
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim();
@@ -46,7 +46,7 @@ export default function SearchScreen() {
     try {
       const result = await dictionaryApi.searchWord(trimmedQuery);
 
-      await searchHistory.addToHistory(trimmedQuery);
+      await addToHistory(trimmedQuery);
 
       router.push({
         pathname: "/word-details",

@@ -1,6 +1,4 @@
-// import { DrawerActions } from "expo-router/react-navigation";
 import { router, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,6 +9,7 @@ import {
   View,
 } from "react-native";
 
+import Ionicons from "@expo/vector-icons/Ionicons";
 import {
   BorderRadius,
   Colors,
@@ -18,40 +17,19 @@ import {
   FontWeights,
   Spacing,
 } from "../constants/theme";
+import { useSearchHistory } from "../contexts/SearchHistoryContext";
 import { dictionaryApi } from "../services/dictionaryApi";
-import { HistoryItem, searchHistory } from "../utils/searchHistory";
 
 export default function DrawerContent() {
   const navigation = useNavigation<any>();
-
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadHistory();
-
-    const unsubscribe = navigation.addListener("focus", loadHistory);
-
-    return unsubscribe;
-  }, []);
-
-  const loadHistory = async () => {
-    setIsLoading(true);
-    try {
-      const historyData = await searchHistory.getHistory();
-      setHistory(historyData);
-    } catch (error) {
-      console.error("Error loading history:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { history, isLoading, addToHistory, clearHistory, removeFromHistory } =
+    useSearchHistory();
 
   const handleHistoryPress = async (word: string) => {
     try {
       const result = await dictionaryApi.searchWord(word);
 
-      await searchHistory.addToHistory(word);
+      await addToHistory(word);
 
       // Fixed: Cleanly call closeDrawer on the drawer layout instance parent
       const drawerNav = navigation.getParent("drawer") || navigation;
@@ -78,16 +56,14 @@ export default function DrawerContent() {
         text: "Clear",
         style: "destructive",
         onPress: async () => {
-          await searchHistory.clearHistory();
-          setHistory([]);
+          await clearHistory();
         },
       },
     ]);
   };
 
   const handleRemoveItem = async (word: string) => {
-    await searchHistory.removeFromHistory(word);
-    setHistory((prev) => prev.filter((i) => i.word !== word));
+    await removeFromHistory(word);
   };
 
   return (
@@ -116,7 +92,7 @@ export default function DrawerContent() {
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => handleRemoveItem(item.word)}>
-                <Text style={{ color: "red" }}>✕</Text>
+                <Ionicons name="close-circle" size={20} color={Colors.error} />
               </TouchableOpacity>
             </View>
           ))
