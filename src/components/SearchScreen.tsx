@@ -129,13 +129,6 @@ export default function SearchScreen() {
             </TouchableOpacity>
           </View>
         )}
-
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>💡 Try searching for words like:</Text>
-          <Text style={styles.exampleWord}>hello</Text>
-          <Text style={styles.exampleWord}>computer</Text>
-          <Text style={styles.exampleWord}>beautiful</Text>
-        </View>
       </View>
     </View>
   );
