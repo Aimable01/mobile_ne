@@ -24,18 +24,13 @@ import { searchHistory } from "../utils/searchHistory";
 
 export default function WordDetailsScreen() {
   const { wordData } = useLocalSearchParams<{ wordData: string }>();
+
   const [data, setData] = useState<WordData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
 
-  // Initialize the native expo-audio player instance
-  const player = useAudioPlayer(
-    currentAudioUrl
-      ? currentAudioUrl.startsWith("//")
-        ? `https:${currentAudioUrl}`
-        : currentAudioUrl
-      : "",
-  );
+  // Create player once
+  const player = useAudioPlayer();
 
   useEffect(() => {
     if (wordData) {
@@ -51,28 +46,49 @@ export default function WordDetailsScreen() {
     }
   }, [wordData]);
 
+  // Cleanup when leaving screen
+  useEffect(() => {
+    return () => {
+      try {
+        player.pause();
+      } catch (error) {
+        console.error("Error cleaning up audio:", error);
+      }
+    };
+  }, [player]);
+
   const handleAudioPress = async (audioUrl: string) => {
     try {
+      const normalizedUrl = audioUrl.startsWith("//")
+        ? `https:${audioUrl}`
+        : audioUrl;
+
+      // Same audio already loaded
       if (currentAudioUrl === audioUrl) {
         if (player.playing) {
           player.pause();
         } else {
           player.play();
         }
-      } else {
-        // Change the source and playback immediately
-        setCurrentAudioUrl(audioUrl);
-        player.play();
+        return;
       }
+
+      // Load and play new audio immediately
+      setCurrentAudioUrl(audioUrl);
+
+      await player.replace(normalizedUrl);
+
+      player.play();
     } catch (error) {
       console.error("Error handling audio playback:", error);
       Alert.alert("Error", "Failed to play audio pronunciation");
     }
   };
 
-  const stopAudio = () => {
+  const stopAudio = async () => {
     try {
-      player.replace("");
+      player.pause();
+      await player.replace("");
       setCurrentAudioUrl(null);
     } catch (error) {
       console.error("Error stopping audio:", error);
@@ -82,8 +98,11 @@ export default function WordDetailsScreen() {
   const handleHistoryWordPress = async (word: string) => {
     try {
       const { dictionaryApi } = await import("../services/dictionaryApi");
+
       const result = await dictionaryApi.searchWord(word);
+
       await searchHistory.addToHistory(word);
+
       router.push({
         pathname: "/word-details",
         params: { wordData: JSON.stringify(result[0]) },
@@ -91,6 +110,7 @@ export default function WordDetailsScreen() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An unexpected error occurred";
+
       Alert.alert("Error", errorMessage);
     }
   };
@@ -107,11 +127,14 @@ export default function WordDetailsScreen() {
           >
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
+
           <Text style={styles.navTitle} numberOfLines={1}>
             Loading…
           </Text>
+
           <View style={styles.backButton} />
         </View>
+
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={Colors.brandPrimary} />
         </View>
@@ -131,11 +154,14 @@ export default function WordDetailsScreen() {
           >
             <Text style={styles.backArrow}>←</Text>
           </TouchableOpacity>
+
           <Text style={styles.navTitle} numberOfLines={1}>
             Word Details
           </Text>
+
           <View style={styles.backButton} />
         </View>
+
         <View style={styles.centerContainer}>
           <Text style={styles.errorText}>No word data available</Text>
         </View>
@@ -146,11 +172,11 @@ export default function WordDetailsScreen() {
   const audioPhonetics = data.phonetics.filter(
     (p) => p.audio && p.audio.trim() !== "",
   );
+
   const hasAudio = audioPhonetics.length > 0;
 
   return (
     <SafeAreaProvider style={styles.safeArea}>
-      {/* Nav header */}
       <View style={styles.navHeader}>
         <TouchableOpacity
           style={styles.backButton}
@@ -160,10 +186,11 @@ export default function WordDetailsScreen() {
         >
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
+
         <Text style={styles.navTitle} numberOfLines={1}>
           {data.word}
         </Text>
-        {/* Right spacer keeps title centred */}
+
         <View style={styles.backButton} />
       </View>
 
@@ -173,6 +200,7 @@ export default function WordDetailsScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.word}>{data.word}</Text>
+
           {data.phonetic && (
             <Text style={styles.phonetic}>{data.phonetic}</Text>
           )}
@@ -180,6 +208,7 @@ export default function WordDetailsScreen() {
           {hasAudio && (
             <View style={styles.audioContainer}>
               <Text style={styles.audioLabel}>Pronunciation:</Text>
+
               {audioPhonetics.map((phonetic, index) => (
                 <TouchableOpacity
                   key={index}
@@ -193,14 +222,14 @@ export default function WordDetailsScreen() {
                   <Text style={styles.audioButtonText}>
                     {currentAudioUrl === phonetic.audio && player.playing
                       ? "⏸️ Pause"
-                      : currentAudioUrl === phonetic.audio && !player.playing
+                      : currentAudioUrl === phonetic.audio
                         ? "▶️ Resume"
                         : "🔊 Listen"}
                   </Text>
                 </TouchableOpacity>
               ))}
 
-              {currentAudioUrl && player.playing && (
+              {currentAudioUrl && (
                 <TouchableOpacity style={styles.stopButton} onPress={stopAudio}>
                   <Text style={styles.stopButtonText}>⏹️ Stop</Text>
                 </TouchableOpacity>
@@ -217,10 +246,12 @@ export default function WordDetailsScreen() {
               (definition: Definition, defIndex: number) => (
                 <View key={defIndex} style={styles.definitionContainer}>
                   <Text style={styles.definitionNumber}>{defIndex + 1}.</Text>
+
                   <View style={styles.definitionContent}>
                     <Text style={styles.definition}>
                       {definition.definition}
                     </Text>
+
                     {definition.example && (
                       <Text style={styles.example}>
                         Example: {definition.example}
@@ -234,6 +265,7 @@ export default function WordDetailsScreen() {
             {meaning.synonyms && meaning.synonyms.length > 0 && (
               <View style={styles.synonymsContainer}>
                 <Text style={styles.synonymsLabel}>Synonyms:</Text>
+
                 <View style={styles.synonymsList}>
                   {meaning.synonyms.slice(0, 5).map((synonym, synIndex) => (
                     <TouchableOpacity
