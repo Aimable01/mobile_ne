@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 import { BorderRadius, Colors, FontSizes, FontWeights, Shadows, Spacing } from '../constants/theme';
 import { Definition, Meaning, WordData } from '../services/dictionaryApi';
@@ -129,17 +130,45 @@ export default function WordDetailsScreen() {
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Colors.brandPrimary} />
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.navHeader}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.navTitle} numberOfLines={1}>Loading…</Text>
+          <View style={styles.backButton} />
+        </View>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={Colors.brandPrimary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!data) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>No word data available</Text>
-      </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.navHeader}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.navTitle} numberOfLines={1}>Word Details</Text>
+          <View style={styles.backButton} />
+        </View>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>No word data available</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -147,7 +176,23 @@ export default function WordDetailsScreen() {
   const hasAudio = audioPhonetics.length > 0;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <SafeAreaView style={styles.safeArea}>
+      {/* Nav header */}
+      <View style={styles.navHeader}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.navTitle} numberOfLines={1}>{data.word}</Text>
+        {/* Right spacer keeps title centred */}
+        <View style={styles.backButton} />
+      </View>
+
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.header}>
         <Text style={styles.word}>{data.word}</Text>
         {data.phonetic && (
@@ -237,11 +282,46 @@ export default function WordDetailsScreen() {
           <Text style={styles.origin}>{data.origin}</Text>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  navHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    fontSize: 24,
+    color: Colors.brandPrimary,
+    fontWeight: FontWeights.bold,
+  },
+  navTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Colors.textPrimary,
+    fontFamily: 'Inter',
+    textTransform: 'capitalize',
+  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
