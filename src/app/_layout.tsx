@@ -1,20 +1,14 @@
 import { Drawer } from "expo-router/drawer";
+import DrawerContent from "../components/DrawerContent";
 
 export default function RootLayout() {
   return (
-    <Drawer screenOptions={{ headerShown: false }}>
-      <Drawer.Screen
-        name="index"
-        options={{
-          title: "Search",
-        }}
-      />
-      <Drawer.Screen
-        name="word-details"
-        options={{
-          title: "Word Details",
-        }}
-      />
+    <Drawer
+      screenOptions={{ headerShown: false }}
+      drawerContent={() => <DrawerContent />}
+    >
+      <Drawer.Screen name="index" />
+      <Drawer.Screen name="word-details" />
     </Drawer>
   );
 }

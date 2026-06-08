@@ -1,29 +1,41 @@
-import React, { useState } from 'react';
+import { router, useNavigation } from "expo-router";
+// import { DrawerActions } from "expo-router/react-navigation";
+import { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Keyboard,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Keyboard,
-  Alert,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Colors, Spacing, BorderRadius, FontSizes, FontWeights, Shadows } from '../constants/theme';
-import { dictionaryApi, WordData } from '../services/dictionaryApi';
-import { searchHistory } from '../utils/searchHistory';
+  View,
+} from "react-native";
+
+import {
+  BorderRadius,
+  Colors,
+  FontSizes,
+  FontWeights,
+  Shadows,
+  Spacing,
+} from "../constants/theme";
+
+import { dictionaryApi } from "../services/dictionaryApi";
+import { searchHistory } from "../utils/searchHistory";
 
 export default function SearchScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const navigation = useNavigation<any>();
 
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim();
 
     if (!trimmedQuery) {
-      Alert.alert('Validation Error', 'Please enter a word to search');
+      Alert.alert("Validation Error", "Please enter a word to search");
       return;
     }
 
@@ -33,19 +45,19 @@ export default function SearchScreen() {
 
     try {
       const result = await dictionaryApi.searchWord(trimmedQuery);
-      
-      // Add to search history
+
       await searchHistory.addToHistory(trimmedQuery);
 
-      // Navigate to word details screen with the first result
       router.push({
-        pathname: '/word-details',
+        pathname: "/word-details",
         params: { wordData: JSON.stringify(result[0]) },
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+
       setError(errorMessage);
-      Alert.alert('Error', errorMessage);
+      Alert.alert("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -53,9 +65,32 @@ export default function SearchScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => {
+            // Fixed: Safely dynamic resolve layout parent drawer toggle execution
+            const drawerNav = navigation.getParent("drawer") || navigation;
+            if (drawerNav && typeof drawerNav.toggleDrawer === "function") {
+              drawerNav.toggleDrawer();
+            }
+          }}
+        >
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+          <View style={styles.menuLine} />
+        </TouchableOpacity>
+
+        <Text style={styles.topBarTitle}>Dictionary</Text>
+
+        <View style={styles.menuButton} />
+      </View>
+
       <View style={styles.content}>
-        <Text style={styles.title}>Dictionary</Text>
-        <Text style={styles.subtitle}>Find word meanings, pronunciations, and examples</Text>
+        <Text style={styles.subtitle}>
+          Find word meanings, pronunciations, and examples
+        </Text>
 
         <View style={styles.searchContainer}>
           <TextInput
@@ -69,8 +104,12 @@ export default function SearchScreen() {
             autoCorrect={false}
             editable={!isLoading}
           />
+
           <TouchableOpacity
-            style={[styles.searchButton, isLoading && styles.searchButtonDisabled]}
+            style={[
+              styles.searchButton,
+              isLoading && styles.searchButtonDisabled,
+            ]}
             onPress={handleSearch}
             disabled={isLoading}
           >
@@ -85,7 +124,7 @@ export default function SearchScreen() {
         {error && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={handleSearch}>
+            <TouchableOpacity onPress={handleSearch}>
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
@@ -110,20 +149,20 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: Spacing.xl,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: FontSizes.xxl,
     fontWeight: FontWeights.bold,
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   subtitle: {
     fontSize: FontSizes.md,
     color: Colors.textSecondary,
     marginBottom: Spacing.xxl,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   searchContainer: {
     marginBottom: Spacing.lg,
@@ -137,13 +176,13 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   searchButton: {
     backgroundColor: Colors.brandPrimary,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
     ...Shadows.md,
   },
   searchButtonDisabled: {
@@ -153,30 +192,30 @@ const styles = StyleSheet.create({
     color: Colors.background,
     fontSize: FontSizes.md,
     fontWeight: FontWeights.semibold,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   errorContainer: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: "#fee2e2",
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: "#fecaca",
   },
   errorText: {
     color: Colors.error,
     fontSize: FontSizes.sm,
     marginBottom: Spacing.sm,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   retryButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   retryButtonText: {
     color: Colors.brandPrimary,
     fontSize: FontSizes.sm,
     fontWeight: FontWeights.semibold,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   infoContainer: {
     marginTop: Spacing.xl,
@@ -188,13 +227,42 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.textSecondary,
     marginBottom: Spacing.sm,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
   },
   exampleWord: {
     fontSize: FontSizes.md,
     color: Colors.brandPrimary,
     fontWeight: FontWeights.medium,
     marginBottom: Spacing.xs,
-    fontFamily: 'Inter',
+    fontFamily: "Inter",
+  },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  topBarTitle: {
+    fontSize: FontSizes.lg,
+    fontWeight: FontWeights.bold,
+    color: Colors.textPrimary,
+    fontFamily: "Inter",
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    gap: 5,
+    paddingHorizontal: 4,
+  },
+  menuLine: {
+    height: 2,
+    backgroundColor: Colors.textPrimary,
+    borderRadius: 2,
   },
 });
