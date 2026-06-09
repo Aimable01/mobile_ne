@@ -36,6 +36,14 @@ export default function SearchScreen() {
   const handleSearch = async () => {
     const trimmedQuery = searchQuery.trim();
 
+    // validate word
+    const WORD_REGEX = /^[a-zA-Z'-]+$/;
+
+    if (!WORD_REGEX.test(trimmedQuery)) {
+      Alert.alert("Validation Error", "Please enter a valid word");
+      return;
+    }
+
     if (!trimmedQuery) {
       Alert.alert("Validation Error", "Please enter a word to search");
       return;
@@ -114,7 +122,10 @@ export default function SearchScreen() {
             placeholder="Enter a word"
             placeholderTextColor={Colors.textPlaceholder}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(text) => {
+              const sanitized = text.replace(/[^a-zA-Z'-]/g, "");
+              setSearchQuery(sanitized);
+            }}
             onSubmitEditing={handleSearch}
             autoCapitalize="none"
             autoCorrect={false}
